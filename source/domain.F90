@@ -12,7 +12,7 @@
 !  routines in the block, distribution modules.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: domain.F90 43948 2013-02-13 21:34:24Z brady@ucar.edu $
+!  SVN:$Id: domain.F90 43213 2013-01-11 18:24:48Z mlevy@ucar.edu $
 
 ! !USES:
 

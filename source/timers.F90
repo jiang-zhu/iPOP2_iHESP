@@ -10,7 +10,7 @@
 !  and accumulates time for each individual block and node (task).
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: timers.F90 60054 2014-05-08 17:48:28Z brady@ucar.edu $
+!  SVN:$Id: timers.F90 44198 2013-02-25 22:43:22Z mlevy@ucar.edu $
 !
 ! !USES:
 

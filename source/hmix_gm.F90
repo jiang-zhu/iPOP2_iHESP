@@ -11,7 +11,7 @@
 !  and isopycnal diffusion.
 
 ! !REVISION HISTORY:
-!  SVN:$Id: hmix_gm.F90 70554 2015-05-06 15:43:42Z jzhu47@wisc.edu $
+!  SVN:$Id: hmix_gm.F90 48834 2013-07-09 19:37:42Z mlevy@ucar.edu $
 
 ! !USES:
 

@@ -149,6 +149,20 @@
     <decomptype>spacecurve</decomptype>
   </decomp>
 
+  <decomp nproc="2135" res="tx0.1v2" >
+    <maxblocks >1</maxblocks>
+    <bsize_x   >60</bsize_x>
+    <bsize_y   >50</bsize_y>
+    <decomptype>spacecurve</decomptype>
+  </decomp>
+
+  <decomp nproc="2537" res="tx0.1v2" >
+    <maxblocks >1</maxblocks>
+    <bsize_x   >50</bsize_x>
+    <bsize_y   >50</bsize_y>
+    <decomptype>spacecurve</decomptype>
+  </decomp>
+
   <decomp nproc="2356" res="tx0.1v2" >
     <maxblocks >1</maxblocks>
     <bsize_x   >45</bsize_x>
@@ -217,6 +231,13 @@
      <bsize_x   >20</bsize_x>
      <bsize_y   >50</bsize_y>
      <decomptype>spacecurve</decomptype>
+  </decomp>
+
+  <decomp nproc="16295" res="tx0.1v2"  nthrd="1">
+    <maxblocks >1</maxblocks> 
+    <bsize_x>15</bsize_x> 
+    <bsize_y>24</bsize_y>    
+    <decomptype>spacecurve</decomptype>
   </decomp>
 
   <decomp nproc="19460" res="tx0.1v2"  nthrd="1">

@@ -10,7 +10,7 @@
 !  horizontal tracer and momentum mixing modules.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: horizontal_mix.F90 60054 2014-05-08 17:48:28Z brady@ucar.edu $
+!  SVN:$Id: horizontal_mix.F90 47361 2013-05-21 20:54:30Z mlevy@ucar.edu $
 !
 ! !USES:
 

@@ -35,6 +35,8 @@ _config_cache_template = """<?xml version="1.0"?>
 <entry id="ocn_grid" value="{ocn_grid}" list="" valid_values="">Ocean grid used for POP</entry>
 <entry id="use_abio" value="{use_abio}" list="" valid_values="FALSE,TRUE">Use abio tracer module</entry>
 <entry id="use_cfc" value="{use_cfc}" list="" valid_values="FALSE,TRUE">Use cfc tracer module</entry>
+<entry id="use_wiso" value="{use_wiso}" list="" valid_values="FALSE,TRUE">Use wiso tracer module</entry>
+<entry id="use_nd" value="{use_nd}" list="" valid_values="FALSE,TRUE">Use nd tracer module</entry>
 <entry id="use_ecosys" value="{use_ecosys}" list="" valid_values="FALSE,TRUE">Use ecosys tracer module</entry>
 <entry id="use_iage" value="{use_iage}" list="" valid_values="FALSE,TRUE">Use ideal age tracer module</entry>
 <entry id="use_irf" value="{use_irf}" list="" valid_values="FALSE,TRUE">Use IRF tracer module</entry>
@@ -82,6 +84,8 @@ def determine_tracer_count(case, caseroot, srcroot, decomp_cppdefs):
 
     use_iage = "FALSE"
     use_cfc = "FALSE"
+    use_wiso = "FALSE"
+    use_nd = "FALSE"
     use_sf6 = "FALSE"
     use_abio = "FALSE"
     use_ecosys = "FALSE"
@@ -101,6 +105,12 @@ def determine_tracer_count(case, caseroot, srcroot, decomp_cppdefs):
                 NT = NT + 1
             elif module == "cfc":
                 use_cfc = "TRUE"
+                NT = NT + 2
+            elif module == "wiso":
+                use_wiso = "TRUE"
+                NT = NT + 2
+            elif module == "nd":
+                use_nd = "TRUE"
                 NT = NT + 2
             elif module == "sf6":
                 use_sf6 = "TRUE"
@@ -176,6 +186,8 @@ def determine_tracer_count(case, caseroot, srcroot, decomp_cppdefs):
         ocn_grid=case.get_value("OCN_GRID"),
         use_abio=use_abio,
         use_cfc=use_cfc,
+        use_wiso=use_wiso,
+        use_nd=use_nd,
         use_ecosys=use_ecosys,
         use_iage=use_iage,
         use_irf=use_irf,

@@ -790,7 +790,6 @@ contains
    var_cnt = var_cnt+1
 
 
-
 !-----------------------------------------------------------------------
 ! Allocate variable to save surface variables to in surf_flux,
 ! so tavg can be called later for them (in tavg_forcing)
@@ -993,7 +992,6 @@ contains
       GAS_FLUX_ABIO_DIC14   ! Surface flux of DIC14
 
 
-
       real (r8), dimension(nx_block) :: &
       PHLO,             & ! lower bound for ph in solver
       PHHI,             & ! upper bound for ph in solver
@@ -1014,7 +1012,7 @@ contains
 !  local parameters
 !-----------------------------------------------------------------------
    real (r8), parameter :: &
-      ALK_bar_global   = 2310._r8  ! Alkbar, in microeq/kg, based on OCMIP2
+      ALK_bar_global   = 2310._r8     ! Alkbar, in microeq/kg, based on OCMIP2
 
 !-----------------------------------------------------------------------
 
@@ -1032,8 +1030,6 @@ contains
       first = .false.
    endif
 
-
-
 ! Initilize fields to zero
 !$OMP PARALLEL DO PRIVATE(iblock)
    do iblock = 1, nblocks_clinic
@@ -1041,7 +1037,6 @@ contains
       XKW_USED(:,:,iblock)     = c0
       AP_USED(:,:,iblock)      = c0
       STF_MODULE(:,:,:,iblock) = c0
-
    end do
 !$OMP END PARALLEL DO
 !-----------------------------------------------------------------------------------------------
@@ -1057,8 +1052,6 @@ contains
  !$OMP                     ALK_ROW,PH_NEW,CO2STAR_ROW, DCO2STAR_ROW,&
  !$OMP                     pCO2SURF_ROW,DpCO2_ROW,GAS_FLUX_ABIO_DIC,&
  !$OMP                     GAS_FLUX_ABIO_DIC14,CO3_ROW)
-
-
 
    do iblock = 1, nblocks_clinic
       where (LAND_MASK(:,:,iblock))
@@ -1088,7 +1081,6 @@ contains
 
       XKW_ICE = (c1 - IFRAC_USED(:,:,iblock)) * XKW_USED(:,:,iblock)
 
-
 !-----------------------------------------------------------------------
 ! Compute CO2 Schmidt number
 !-----------------------------------------------------------------------
@@ -1101,10 +1093,8 @@ contains
 
       where (LAND_MASK(:,:,iblock))
          PV = XKW_ICE * SQRT(660.0_r8 / CO2_SCHMIDT_USED)
-
       elsewhere
          PV = c0
-
       end where
 
 !-----------------------------------------------------------------------
@@ -1148,19 +1138,14 @@ contains
 
       SURF_VALS_DIC14 = p5*(SURF_VALS_OLD(:,:,abio_dic14_ind,iblock) + &
                             SURF_VALS_CUR(:,:,abio_dic14_ind,iblock))
-
-
-
 !-----------------------------------------------------------------------
 ! Calculate R14C_ocn and R14C_atm
 !-----------------------------------------------------------------------
 
       where(SURF_VALS_DIC/=c0)
          R14C_ocn = SURF_VALS_DIC14/SURF_VALS_DIC
-  
       elsewhere
          R14C_ocn = c0
-
       endwhere
 
       R14C_atm = c1 + D14C / c1000
@@ -1225,8 +1210,6 @@ contains
          GAS_FLUX_ABIO_DIC14(:,j) = PV(:,j) * ((DCO2STAR_ROW + CO2STAR_ROW) * &
                                      R14C_atm(:,j) - CO2STAR_ROW * R14C_ocn(:,j))
 
-
-
  !-----------------------------------------------------------------------
  ! Assign calculated values to TAVG fields
  !-----------------------------------------------------------------------
@@ -1244,7 +1227,6 @@ contains
 
       STF_MODULE(:,:,abio_dic14_ind,iblock) = STF_MODULE(:,:,abio_dic14_ind,iblock) + &
                                               GAS_FLUX_ABIO_DIC14
-
 
       STF_MODULE(:,:,abio_dic_ind,iblock)   = STF_MODULE(:,:,abio_dic_ind,iblock) +   &
                                               GAS_FLUX_ABIO_DIC
@@ -1264,7 +1246,6 @@ contains
          ABIO_DIC_SFLUX_TAVG(:,:,8,iblock) = GAS_FLUX_ABIO_DIC
          ABIO_DIC_SFLUX_TAVG(:,:,9,iblock) = GAS_FLUX_ABIO_DIC14
          ABIO_DIC_SFLUX_TAVG(:,:,15,iblock)= D14C
-
       elsewhere
          ABIO_DIC_SFLUX_TAVG(:,:,1,iblock) = c0
          ABIO_DIC_SFLUX_TAVG(:,:,2,iblock) = c0
@@ -1276,7 +1257,6 @@ contains
          ABIO_DIC_SFLUX_TAVG(:,:,8,iblock) = c0
          ABIO_DIC_SFLUX_TAVG(:,:,9,iblock) = c0
          ABIO_DIC_SFLUX_TAVG(:,:,15,iblock)= c0
-
       endwhere
 
    end do !iblock = 1, nblocks_clinic
@@ -1439,7 +1419,6 @@ contains
       call accumulate_tavg_field(ABIO_DIC_SFLUX_TAVG(:,:,13,iblock),tavg_ABIO_DpCO2,iblock,1)
       call accumulate_tavg_field(ABIO_DIC_SFLUX_TAVG(:,:,14,iblock),tavg_ABIO_ALK,iblock,1)
       call accumulate_tavg_field(ABIO_DIC_SFLUX_TAVG(:,:,15,iblock),tavg_ABIO_D14Catm,iblock,1)
-
    end do
 
 

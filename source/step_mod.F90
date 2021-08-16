@@ -9,7 +9,7 @@
 !  Contains the routine for stepping the model forward one timestep
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: step_mod.F90 70554 2015-05-06 15:43:42Z jzhu47@wisc.edu $
+!  SVN:$Id: step_mod.F90 87926 2017-12-12 00:31:20Z nanr $
 !
 ! !USES:
 
@@ -752,6 +752,8 @@
      do iblock = 1,nblocks_clinic
         call ice_flx_to_coupler(TRACER(:,:,:,:,curtime,iblock),iblock)
         call accumulate_tavg_field(QFLUX(:,:,iblock), tavg_id('QFLUX'),  &
+                                   iblock,1,const=tlast_ice)
+        call accumulate_tavg_field(QFLUX(:,:,iblock), tavg_id('QFLUX_2'),  &
                                    iblock,1,const=tlast_ice)
                                    
      end do ! block loop

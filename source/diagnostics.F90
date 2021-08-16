@@ -10,7 +10,7 @@
 !  diagnostics.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: diagnostics.F90 60054 2014-05-08 17:48:28Z brady@ucar.edu $
+!  SVN:$Id: diagnostics.F90 46449 2013-04-26 21:20:47Z mlevy@ucar.edu $
 !
 ! !USES:
 

@@ -9,7 +9,7 @@
 !  This module supports time-averaged qflux computations
 !
 ! !REVISION HISTORY:
-! SVN:$Id: qflux_mod.F90 12674 2008-10-31 22:21:32Z njn01 $
+! SVN:$Id: qflux_mod.F90 87926 2017-12-12 00:31:20Z nanr $
 !
 
 ! !USES:
@@ -32,7 +32,8 @@
 !BOC
 
    integer (int_kind) :: &
-      tavg_QFLUX          ! tavg id for QFLUX 
+      tavg_QFLUX,        &! tavg id for QFLUX 
+      tavg_QFLUX_2        ! tavg id for QFLUX  daily
 
 !EOC
 !***********************************************************************
@@ -50,6 +51,12 @@
              &/ 'heat of fusion > 0 or ice-melting potential < 0 '
  
    call define_tavg_field(tavg_QFLUX,'QFLUX',2,               &
+                          long_name=trim(string),             &
+                          tavg_method=tavg_method_qflux,      &
+                          units='Watts/meter^2',              &
+                          coordinates  ='TLONG TLAT time',    &
+                          grid_loc ='2111')
+   call define_tavg_field(tavg_QFLUX_2,'QFLUX_2',2,               &
                           long_name=trim(string),             &
                           tavg_method=tavg_method_qflux,      &
                           units='Watts/meter^2',              &

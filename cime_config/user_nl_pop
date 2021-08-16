@@ -9,6 +9,7 @@
 !      $SRCROOT/components/pop/input_templates/ocn.ecosys.tavg.csh  
 !      $SRCROOT/components/pop/input_templates/ocn.iage.tavg.csh  
 !      $SRCROOT/components/pop/input_templates/ocn.cfc.tavg.csh 
+!      $CODEROOT/ocn/pop2/input_templates/ocn.wiso.tavg.csh
 !      $SRCROOT/components/pop/input_templates/ocn.abio_dic_dic14.tavg.csh
 !      $SRCROOT/components/pop/input_templates/ocn.ciso.tavg.csh  
 !      $SRCROOT/components/pop/input_templates/ocn.IRF.tavg.csh  

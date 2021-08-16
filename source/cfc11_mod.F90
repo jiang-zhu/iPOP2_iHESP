@@ -8,7 +8,7 @@ module cfc11_mod
 ! !DESCRIPTION:
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: cfc11_mod.F90 70554 2015-05-06 15:43:42Z jzhu47@wisc.edu $
+!  SVN:$Id: cfc11_mod.F90 56176 2013-12-20 18:35:46Z mlevy@ucar.edu $
 
 ! !USES:
 

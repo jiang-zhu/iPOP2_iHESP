@@ -16,7 +16,7 @@ endif
 
 @ s1 = 1   # use base-model stream 1
 
-cat >! $CASEROOT/Buildconf/pop2conf/nd_tavg_contents << EOF
+cat >! $CASEROOT/Buildconf/popconf/nd_tavg_contents << EOF
 $s1  ND143
 $s1  ND144
 
@@ -36,7 +36,7 @@ EOF
 # Add optional tracer budget terms
 #-------------------------------------------------------------------------------------
 if ($OCN_TAVG_TRACER_BUDGET == TRUE) then
-cat >> $CASEROOT/Buildconf/pop2conf/nd_tavg_contents << EOF
+cat >> $CASEROOT/Buildconf/popconf/nd_tavg_contents << EOF
 $s1  ND143_RESET_TEND
 $s1  ND144_RESET_TEND
 $s1  DIA_IMPVF_ND
