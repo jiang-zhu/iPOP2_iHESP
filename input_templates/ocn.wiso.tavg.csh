@@ -16,7 +16,7 @@ endif
 
 @ s1 = 1   # use base-model stream 1
 
-cat >! $CASEROOT/Buildconf/pop2conf/wiso_tavg_contents << EOF
+cat >! $CASEROOT/Buildconf/popconf/wiso_tavg_contents << EOF
 $s1  PREC_16O_F  
 $s1  PREC_18O_F  
 $s1  PREC_HDO_F  
@@ -42,7 +42,7 @@ EOF
 
 
 if ($OCN_TAVG_TRACER_BUDGET == TRUE) then
-cat >> $CASEROOT/Buildconf/pop2conf/wiso_tavg_contents << EOF
+cat >> $CASEROOT/Buildconf/popconf/wiso_tavg_contents << EOF
 $s1  KPP_SRC_R18O
 $s1  KPP_SRC_RHDO
 $s1  DIA_IMPVF_R18O

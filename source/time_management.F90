@@ -10,7 +10,7 @@
 !  flags and other functions related to model time.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: time_management.F90 26358 2011-01-11 18:10:13Z njn01 $
+!  SVN:$Id: time_management.F90 86937 2017-10-10 17:01:18Z altuntas@ucar.edu $
 !
 ! !USES:
 
@@ -3097,7 +3097,7 @@
 !
 !-----------------------------------------------------------------------
 
-   integer (int_kind) :: &
+   integer (kind=8) :: &
       mod_test,          &
       freq_opt,          &
       freq

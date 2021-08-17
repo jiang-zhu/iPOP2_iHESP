@@ -9,7 +9,7 @@
 !  reductions like global sums, minvals, maxvals, etc.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: global_reductions.F90 70555 2015-05-06 15:45:07Z jzhu47@wisc.edu $
+!  SVN:$Id: global_reductions.F90 60040 2014-05-07 21:54:20Z mlevy@ucar.edu $
 
 ! !USES:
 

@@ -9,7 +9,7 @@
 !  for restarting a POP simulation.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: restart.F90 70554 2015-05-06 15:43:42Z jzhu47@wisc.edu $
+!  SVN:$Id: restart.F90 59359 2014-04-20 22:10:41Z mlevy@ucar.edu $
 !
 ! !USES:
 

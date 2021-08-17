@@ -11,7 +11,7 @@
 !  modules.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: output.F90 60054 2014-05-08 17:48:28Z brady@ucar.edu $
+!  SVN:$Id: output.F90 46059 2013-04-16 22:02:01Z mlevy@ucar.edu $
 !
 ! !USES:
 

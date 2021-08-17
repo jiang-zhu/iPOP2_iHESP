@@ -9,7 +9,7 @@
 !  blocks across processors.
 !
 ! !REVISION HISTORY:
-!  CVS:$Id: distribution.F90 43948 2013-02-13 21:34:24Z brady@ucar.edu $
+!  CVS:$Id: distribution.F90 43213 2013-01-11 18:24:48Z mlevy@ucar.edu $
 !  CVS:$Name:  $
 
 ! !USES:
@@ -557,7 +557,6 @@
    xdim = Factor(nblocks_x)
    ydim = Factor(nblocks_y)
    numfac = xdim%numfact
-
    !---------------------------------------------
    ! Match the common factors to create SFC curve
    !---------------------------------------------

@@ -34,12 +34,12 @@ module forcing_fields
       MELT_F = c0,       &! melt          flux    from cpl (kg/m2/s)
       ROFF_F = c0,       &! river runoff  flux    from cpl (kg/m2/s)
       IOFF_F = c0,       &! ice   runoff  flux    from cpl (kg/m2/s)
-
       SALT_F = c0,       &! salt          flux    from cpl (kg(salt)/m2/s)
       SENH_F = c0,       &! sensible heat flux    from cpl (W/m2   )
       LWUP_F = c0,       &! longwave heat flux up from cpl (W/m2   )
       LWDN_F = c0,       &! longwave heat flux dn from cpl (W/m2   )
       MELTH_F= c0         ! melt     heat flux    from cpl (W/m2   )
+
 
    integer(kind=int_kind), public :: &
       ATM_CO2_PROG_nf_ind = 0, & ! bottom atm level prognostic co2

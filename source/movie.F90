@@ -9,7 +9,7 @@
 !  time-averages of selected fields and writing this data to files.
 !
 ! !REVISION HISTORY:
-!  CVS:$Id: movie.F90 42998 2013-01-03 18:12:39Z ajahn@ucar.edu $
+!  CVS:$Id: movie.F90 41886 2012-11-13 16:56:30Z mlevy@ucar.edu $
 !  CVS:$Name:  $
 
 ! !USES:

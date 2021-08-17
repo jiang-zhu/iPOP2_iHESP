@@ -9,7 +9,7 @@
 !  snapshot history file output.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: history.F90 42998 2013-01-03 18:12:39Z ajahn@ucar.edu $
+!  SVN:$Id: history.F90 41886 2012-11-13 16:56:30Z mlevy@ucar.edu $
 !
 ! !USES:
 

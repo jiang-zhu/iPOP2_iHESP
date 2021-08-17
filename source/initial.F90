@@ -10,7 +10,7 @@
 !  POP module.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: initial.F90 70554 2015-05-06 15:43:42Z jzhu47@wisc.edu $
+!  SVN:$Id: initial.F90 86888 2017-10-05 15:15:23Z altuntas@ucar.edu $
 !
 ! !USES:
 
@@ -89,6 +89,7 @@
 #endif
    use overflows
    use overflow_type
+   use spatial_filter
 
    implicit none
    private
@@ -361,6 +362,21 @@
    call init_surface_hgt
 
 !-----------------------------------------------------------------------
+!                                                        
+!  Preprocessing barotropic elliptic solver
+!                                                        
+!-----------------------------------------------------------------------
+
+   call POP_SolversPrep(errorCode)
+  
+   if (errorCode /= POP_Success) then
+      call POP_ErrorSet(errorCode, &
+         'POP_Init: error preprocessing solvers')
+      return
+   endif
+
+
+!-----------------------------------------------------------------------
 !
 !  initialize prognostic fields
 !
@@ -603,6 +619,15 @@
 !-----------------------------------------------------------------------
 
    call init_step
+
+!-----------------------------------------------------------------------
+!
+!  initialize spatial filter
+!
+!-----------------------------------------------------------------------
+
+   call init_filter
+
 
 !-----------------------------------------------------------------------
 !

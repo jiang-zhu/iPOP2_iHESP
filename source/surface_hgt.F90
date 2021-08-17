@@ -9,7 +9,7 @@
 !  Contains routine for computing change in surface height.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: surface_hgt.F90 26603 2011-01-28 23:09:02Z njn01 $
+!  SVN:$Id: surface_hgt.F90 87926 2017-12-12 00:31:20Z nanr $
 
 ! !USES:
 
@@ -47,6 +47,7 @@
 
    integer (int_kind) :: &
       tavg_SSH,          &! tavg id for sea surface height
+      tavg_SSH_2,        &! tavg id for sea surface height, second stream
       tavg_SSH2,         &! tavg id for sea surface height squared (formerly H2)
       tavg_H3             ! tavg id for (Dx(SSH))**2 + (Dy(SSH))**2
 
@@ -90,6 +91,12 @@
                           long_name='Sea Surface Height',              &
                           units='centimeter', grid_loc='2110',         &
                           coordinates='TLONG TLAT time')
+
+   call define_tavg_field(tavg_SSH_2,'SSH_2',2,                        &
+                          long_name='Sea Surface Height',              &
+                          units='centimeter', grid_loc='2110',         &
+                          coordinates='TLONG TLAT time')
+
    !  formerly H2
    call define_tavg_field(tavg_SSH2,'SSH2',2,                          &
                           long_name='SSH**2',                          &
@@ -283,6 +290,11 @@
 !     accumulate surface height tavg diagnostics if requested
 !
 !-----------------------------------------------------------------------
+
+      if (accumulate_tavg_now(tavg_SSH_2) ) then
+         WORK = PSURF(:,:,curtime,iblock)/grav
+         call accumulate_tavg_field(WORK, tavg_SSH_2, iblock, 1)
+      endif
 
       if (accumulate_tavg_now(tavg_SSH) ) then
          WORK = PSURF(:,:,curtime,iblock)/grav

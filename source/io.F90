@@ -10,7 +10,7 @@
 !  for writing arrays.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: io.F90 70554 2015-05-06 15:43:42Z jzhu47@wisc.edu $
+!  SVN:$Id: io.F90 63715 2014-09-22 22:47:53Z klindsay $
 
 ! !USES:
 

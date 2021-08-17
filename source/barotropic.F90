@@ -10,7 +10,7 @@
 !  equations.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: barotropic.F90 60054 2014-05-08 17:48:28Z brady@ucar.edu $
+!  SVN:$Id: barotropic.F90 87926 2017-12-12 00:31:20Z nanr $
 
 ! !USES:
 
@@ -29,14 +29,14 @@
    use domain, only: distrb_clinic, blocks_clinic, nblocks_clinic,  &
        POP_haloClinic
    use constants, only: field_type_vector, field_type_scalar,       &
-       grav, c1, c0, field_loc_NEcorner, field_loc_center
+       grav, c1, c0, c2,field_loc_NEcorner, field_loc_center
    use prognostic, only: max_blocks_clinic, GRADPX, GRADPY, UBTROP, VBTROP, &
        PSURF, curtime, oldtime, newtime, PGUESS
    use operators, only: grad, div
    use grid, only: sfc_layer_type, sfc_layer_varthick, TAREA, REGION_MASK,    &
           KMT, FCOR, HU, CALCT, sfc_layer_rigid, sfc_layer_oldfree 
    use time_management, only: mix_pass, leapfrogts, impcor, c2dtu, theta,     &
-          gamma, f_euler_ts, beta, c2dtp, dtp
+          gamma, alpha,f_euler_ts, beta, c2dtp, dtp
    use global_reductions, only: global_sum
    use forcing_fields, only: ATM_PRESS, FW
    use forcing_ap, only: ap_data_type
@@ -65,6 +65,15 @@
    integer (int_kind) :: &
      tavg_SU,            &! tavg id for vertically-integrated U
      tavg_SV              ! tavg id for vertically-integrated V
+
+!.. temporary support for model verification runs
+   integer (int_kind) :: &
+     tavg_UBTROP,        &! tavg id for UBTROP
+     tavg_VBTROP          ! tavg id for VBTROP
+
+   integer (int_kind) :: &
+     tavg_GRADPX,        &! tavg id for GRADPX
+     tavg_GRADPY          ! tavg id for GRADPY
 
 !-----------------------------------------------------------------------
 !
@@ -130,12 +139,18 @@
    real (r8) :: & 
       acheck    ! sum(CHECKER*TAREA)/sum(CONSTNT*TAREA)
 
+   real (r8), dimension(nx_block,ny_block) :: &
+      diagonalCorrection     ! time dependent correction to operator
+
    real (r8), dimension(:,:,:), allocatable :: & 
       CHECK_AREA,    &! TAREA*CHEKER
       CONST_AREA      ! TAREA*CONSTNT
 
    type (block) :: &
       this_block   ! block information for this block
+
+   integer (POP_i4) :: &
+      errorCode          ! returned error code
 
 !-----------------------------------------------------------------------
 !
@@ -153,6 +168,33 @@
            long_name='Vertically Integrated Velocity in grid-y direction', &
                           units='centimeter^2/s', grid_loc='2221',         &
                           field_type = field_type_vector,                   &
+                          coordinates='ULONG ULAT time')
+
+!-----------------------------------------------------------------------
+!
+!  define tavg handles for UBTROP,VBTROP,GRADPX, and GRADPY -- used 
+!     in model verification runs
+!
+!-----------------------------------------------------------------------
+
+   call define_tavg_field(tavg_UBTROP,'UBTROP',2,                              &
+                          long_name='Barotropic Velocity in grid-x direction', &
+                          units='centimeter/s', grid_loc='2221',               &
+                          coordinates='ULONG ULAT time')
+
+   call define_tavg_field(tavg_VBTROP,'VBTROP',2,                              &
+                          long_name='Barotropic Velocity in grid-y direction', &
+                          units='centimeter/s', grid_loc='2221',               &
+                          coordinates='ULONG ULAT time')
+
+   call define_tavg_field(tavg_GRADPX,'GRADPX',2,                                    &
+                          long_name='Surface Pressure Gradient in grid-x direction', &
+                          units=' ', grid_loc='2221',                     &
+                          coordinates='ULONG ULAT time')
+
+   call define_tavg_field(tavg_GRADPY,'GRADPY',2,                                    &
+                          long_name='Surface Pressure Gradient in grid-y direction', &
+                          units=' ', grid_loc='2221',                     &
                           coordinates='ULONG ULAT time')
 
 !-----------------------------------------------------------------------
@@ -221,6 +263,32 @@
       deallocate(CHECK_AREA, CONST_AREA)
 
    endif ! varthick
+
+   ! prepare for solver preprocessing
+   do iblock = 1,nblocks_clinic
+      select case (sfc_layer_type)
+
+      case(sfc_layer_varthick)
+         diagonalCorrection(:,:) =                                       & 
+                        merge(TAREA(:,:,iblock)/(alpha*c2*dtp*dtp*grav), &
+                              c0,CALCT(:,:,iblock))
+
+      case(sfc_layer_rigid)
+         diagonalCorrection(:,:) = 0.0_POP_r8
+
+      case(sfc_layer_oldfree)
+         diagonalCorrection(:,:) =                                       &
+                        merge(TAREA(:,:,iblock)/(alpha*c2*dtp*dtp*grav), &
+                              c0,CALCT(:,:,iblock))
+
+      end select
+
+      call POP_SolversDiagonal(diagonalCorrection, iblock, errorCode)
+
+    end do ! iblock
+
+
+
 
 !-----------------------------------------------------------------------
 !EOC
@@ -659,6 +727,18 @@
       call accumulate_tavg_field(HU(:,:,iblock)*             &
                                  VBTROP(:,:,curtime,iblock), &
                                  tavg_SV, iblock, 1)
+
+      call accumulate_tavg_field(UBTROP(:,:,curtime,iblock), &
+                                 tavg_UBTROP, iblock, 1)
+
+      call accumulate_tavg_field(VBTROP(:,:,curtime,iblock), &
+                                 tavg_VBTROP, iblock, 1)
+
+      call accumulate_tavg_field(GRADPX(:,:,curtime,iblock), &
+                                 tavg_GRADPX, iblock, 1)
+
+      call accumulate_tavg_field(GRADPY(:,:,curtime,iblock), &
+                                 tavg_GRADPY, iblock, 1)
 
    end do ! block loop
 

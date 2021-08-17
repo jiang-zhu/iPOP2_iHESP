@@ -18,7 +18,7 @@
 !  \end{itemize}
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: vertical_mix.F90 70554 2015-05-06 15:43:42Z jzhu47@wisc.edu $
+!  SVN:$Id: vertical_mix.F90 61677 2014-07-03 23:42:39Z mlevy@ucar.edu $
 
 ! !USES:
 

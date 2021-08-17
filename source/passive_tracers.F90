@@ -11,7 +11,7 @@
 !     subroutines in individual passive tracer modules.
 
 ! !REVISION HISTORY:
-!  SVN:$Id: passive_tracers.F90 72765 2015-08-30 01:05:31Z jzhu47@wisc.edu $
+!  SVN:$Id: passive_tracers.F90 63715 2014-09-22 22:47:53Z klindsay $
 
 ! !USES:
 
@@ -129,6 +129,9 @@
 !-----------------------------------------------------------------------
 !  tavg ids for automatically generated tavg passive-tracer fields
 !-----------------------------------------------------------------------
+
+   integer (int_kind), dimension(nt), public :: &
+      tavg_TEND_TRACER    ! tavg id for tracer tendency
 
    integer (int_kind), dimension (3:nt) ::  &
       tavg_var,                 & ! tracer
@@ -694,6 +697,17 @@ if (nd_on) then
                              coordinates='TLONG TLAT time')
    enddo
 
+   do n=1,nt
+     call define_tavg_field(tavg_TEND_TRACER(n), 'TEND_' /&
+                                           &/ trim(tracer_d(n)%short_name),3, &
+                            long_name='Tendency of Thickness Weighted '/&
+                                           &/ trim(tracer_d(n)%short_name),   &
+                            units=trim(tracer_d(n)%tend_units),               &
+                            scale_factor=tracer_d(n)%scale_factor,            &
+                            grid_loc='3111',                                  &
+                            coordinates='TLONG TLAT z_t time')
+   end do
+
 !-----------------------------------------------------------------------
 !  allocate and initialize storage for virtual fluxes
 !-----------------------------------------------------------------------
@@ -1228,7 +1242,7 @@ if (nd_on) then
    end if
 
 !-----------------------------------------------------------------------
-!  ABIO DIC & DIC14 block 
+!  ABIO DIC & DIC14 does not reset values
 !-----------------------------------------------------------------------
 
    if (abio_dic_dic14_on) then

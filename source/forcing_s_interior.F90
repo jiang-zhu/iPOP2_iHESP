@@ -10,7 +10,7 @@
 !  interior salinity restoring.
 !
 ! !REVISION HISTORY:
-!  SVN:$Id: forcing_s_interior.F90 70554 2015-05-06 15:43:42Z jzhu47@wisc.edu $
+!  SVN:$Id: forcing_s_interior.F90 63792 2014-09-25 14:36:26Z mlevy@ucar.edu $
 !
 ! !USES:
 
