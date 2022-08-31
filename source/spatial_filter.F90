@@ -1788,7 +1788,8 @@ module spatial_filter
                buf_start = displs(i)+ 1
                buf_end = displs(i+1)
                call MPI_Irecv(mywork(:,buf_start:buf_end), recv_cts(i), MPI_DBL, &
-                    dest_proc, mytag, MPI_COMM_OCN, & a_request(num_message), ierr)
+                    dest_proc, mytag, MPI_COMM_OCN, &
+                    a_request(num_message), ierr)
             enddo
             if (num_message > 0) then
                call MPI_Waitall(num_message, a_request, a_status, ierr)
@@ -1817,7 +1818,8 @@ module spatial_filter
                buf_end = (mt+1)*nrows
 
                call MPI_Irecv(mywork(buf_start:buf_end, row_num), recv_cts(i), MPI_DBL, &
-                    dest_proc, mytag, MPI_COMM_OCN, & a_request(num_message), ierr)
+                    dest_proc, mytag, MPI_COMM_OCN, &
+                    a_request(num_message), ierr)
             enddo
             if (num_message > 0) then
                call MPI_Waitall(num_message, a_request, a_status, ierr)
