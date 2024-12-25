@@ -33,7 +33,7 @@
    use broadcast, only: broadcast_scalar
    use communicate, only: my_task, master_task
    use grid, only: FCOR, DZU, HUR, KMU, KMT, sfc_layer_type, l1Ddyn,         &
-       sfc_layer_varthick, partial_bottom_cells, dz, DZT, CALCT, dzw, dzr
+       sfc_layer_varthick, partial_bottom_cells, dz, DZT, CALCT, dzw, dzr, HT
    use advection, only: advu, advt, comp_flux_vel_ghost
    use pressure_grad, only: lpressure_avg, gradp
    use horizontal_mix, only: hdiffu, hdifft, iso_impvmixt_tavg
@@ -48,7 +48,7 @@
    use state_mod, only: state
    use ice, only: liceform, ice_formation, increment_tlast_ice
    use time_management, only: mix_pass, leapfrogts, impcor, c2dtu, beta,     &
-       gamma, c2dtt
+       gamma, c2dtt, dt
    use io_types, only: nml_in, nml_filename, stdout
    use tavg, only: define_tavg_field, accumulate_tavg_field, accumulate_tavg_now, &
        tavg_method_max, tavg_method_min
@@ -74,7 +74,8 @@
 
    public :: init_baroclinic,          &
              baroclinic_driver,        &
-             baroclinic_correct_adjust
+             baroclinic_correct_adjust,&
+             accumulate_tavg_rho_tend
 
 ! !PRIVATE DATA MEMBERS:
 
@@ -119,6 +120,7 @@
       tavg_ST,           &! tavg id for salt*temperature
       tavg_RHO,          &! tavg id for in-situ density
       tavg_RHO_VINT,     &! tavg id for vertical integral of in-situ density
+      tavg_PBO,          &! tavg id for sea water pressure at sea floor
       tavg_UV,           &! tavg id for u times v
       tavg_T1_8,         &! tavg id for temperature in top 8 lvls
       tavg_S1_8,         &! tavg id for salinity    in top 8 lvls
@@ -414,12 +416,17 @@
 
    call define_tavg_field(tavg_RHO,'RHO',3,                            &
                           long_name='In-Situ Density',                 &
-                          units='gram/centimeter^3', grid_loc='3111',  &
+                          units='kg/meter^3', grid_loc='3111',         &
                           coordinates='TLONG TLAT z_t time')
 
    call define_tavg_field(tavg_RHO_VINT,'RHO_VINT',2,                  &
                           long_name='Vertical Integral of In-Situ Density', &
                           units='gram/centimeter^2', grid_loc='2110',  &
+                          coordinates='TLONG TLAT time')
+
+   call define_tavg_field(tavg_PBO,'PBO',2,                  &
+                          long_name='Sea Water Pressure at Sea Floor', &
+                          units='Pa', grid_loc='2110',  &
                           coordinates='TLONG TLAT time')
 
    call define_tavg_field(tavg_UV,'UV',3,                              &
@@ -778,8 +785,8 @@
                                     TRACER(:,:,k,2,curtime,iblock), &
                                     tavg_ST,iblock,k)
 
-         call accumulate_tavg_field(RHO(:,:,k,curtime,iblock), &
-                                    tavg_RHO,iblock,k)
+         call accumulate_tavg_field(1000_r8*RHO(:,:,k,curtime,iblock)-1000_r8, &
+                                    tavg_RHO,iblock,k) !FSC save SIGMA in SI
 
 !         if (partial_bottom_cells) then 
 !            WORK1 = RHO(:,:,k,curtime,iblock) * DZT(:,:,k,iblock)
@@ -809,6 +816,7 @@
            endif
          endif 
          call accumulate_tavg_field(WORK1,tavg_RHO_VINT,iblock,k)
+         call accumulate_tavg_field(0.1_r8*grav*WORK1,tavg_PBO,iblock,k)
 
         if ( sfc_layer_type /= sfc_layer_varthick .and. k == 1) then
           if (accumulate_tavg_now(tavg_RESID_T)) then
@@ -1498,6 +1506,14 @@
 
 !-----------------------------------------------------------------------
 !
+!     compute tendency of insitu density
+!
+!-----------------------------------------------------------------------
+
+      call accumulate_tavg_rho_tend(iblock, this_block)
+
+!-----------------------------------------------------------------------
+!
 !  end of block loop
 !
 !-----------------------------------------------------------------------
@@ -1510,6 +1526,107 @@
 !EOC
 
  end subroutine baroclinic_correct_adjust
+
+!***********************************************************************
+!BOP
+! !IROUTINE: accumulate_tavg_rho_tend
+! !INTERFACE:
+
+ subroutine accumulate_tavg_rho_tend(iblock, this_block)
+
+! !DESCRIPTION:
+!  compute tendency of insitu density in SI units
+!  modularized to enable it to be called from different locations,
+!  depending on lrobert_filter
+!
+! !REVISION HISTORY:
+!  same as module
+
+   use passive_tracers, only: tavg_rho_tend, tavg_rhozb_tend, tavg_pb_tend
+   use state_mod, only: state
+
+! !INPUT PARAMETERS:
+
+   integer (int_kind), intent(in) :: iblock
+
+   type (block), intent(in) :: &
+      this_block             ! block info for current block
+
+!EOP
+!BOC
+!-----------------------------------------------------------------------
+!
+!  local variables:
+!
+!-----------------------------------------------------------------------
+
+   integer (int_kind) ::  &
+      k,                  &! vertical level index
+      n                    ! tracer index
+
+   real (r8), dimension(nx_block,ny_block) :: &
+      WORK,               &! RHO now
+      WORK2,              &! RHO cur
+      WORK3,              &! RHO tendency term
+      WORK4,              &! bottom pressure tendency term
+      WORK5,              &! column averaged RHO tendency term
+      WORK_ZINT,          &
+      WORK_ZINT2
+                                                                                                                                                               
+!-----------------------------------------------------------------------                                                                                       
+                                                                                                                                                               
+   if (accumulate_tavg_now(tavg_rho_tend) .or.   &                                                                                                             
+       accumulate_tavg_now(tavg_rhozb_tend) .or. &                                                                                                             
+       accumulate_tavg_now(tavg_pb_tend)) then                                                                                                                 
+                                                                                                                                                               
+      do k=1,km                                                                                                                                                
+                                                                                                                                                               
+         call state(k,k,TRACER(:,:,k,1,newtime,iblock), &                                                                                                      
+                        TRACER(:,:,k,2,newtime,iblock), &                                                                                                      
+                        this_block, RHOFULL=WORK)                                                                                                              
+         call state(k,k,TRACER(:,:,k,1,curtime,iblock), &                                                                                                      
+                        TRACER(:,:,k,2,curtime,iblock), &                                                                                                      
+                        this_block, RHOFULL=WORK2)                                                                                                             
+                                                                                                                                                               
+         WORK3 = (c1 / dt(k)) * (WORK - WORK2)                                                                                                                 
+                                                                                                                                                               
+         call accumulate_tavg_field(WORK3, tavg_rho_tend, iblock, k)                                                                                           
+
+         if (partial_bottom_cells) then                                                                                                                                                               
+             if (k == 1) then                                                                                                                                      
+                 WORK_ZINT = WORK * (DZT(:,:,k,iblock) + PSURF(:,:,newtime,iblock)/grav)                                                                           
+                 WORK_ZINT2 = WORK2 * (DZT(:,:,k,iblock) + PSURF(:,:,curtime,iblock)/grav)                                                                         
+             else                                                                                                                                                  
+                 WORK_ZINT = WORK_ZINT + WORK * DZT(:,:,k,iblock)                                                                                                  
+                 WORK_ZINT2 = WORK_ZINT2 + WORK2 * DZT(:,:,k,iblock)                                                                                               
+             endif
+         else                                                                                                                                                
+             if (k == 1) then                                                                                                                                      
+                 WORK_ZINT = WORK * (dz(k) + PSURF(:,:,newtime,iblock)/grav)                                                                           
+                 WORK_ZINT2 = WORK2 * (dz(k) + PSURF(:,:,curtime,iblock)/grav)                                                                         
+             else                                                                                                                                                  
+                 WORK_ZINT = WORK_ZINT + WORK * dz(k)                                                                                                  
+                 WORK_ZINT2 = WORK_ZINT2 + WORK2 * dz(k)                                                                                               
+             endif
+         endif                                                                                                                                                  
+      end do                                                                                                                                                   
+                                                                                                                                                               
+      WORK4 = 0.1_r8 * (c1 / dt(1)) * grav * (WORK_ZINT - WORK_ZINT2)                                                                                          
+      call accumulate_tavg_field(WORK4, tavg_pb_tend, iblock, 1)                                                                                               
+                                                                                                                                                               
+      WORK_ZINT = WORK_ZINT / (HT(:,:,iblock) + PSURF(:,:,newtime,iblock)/grav)                                                                                
+      WORK_ZINT2 = WORK_ZINT2 / (HT(:,:,iblock) + PSURF(:,:,curtime,iblock)/grav)                                                                              
+                                                                                                                                                               
+      WORK5 = (c1 / dt(1)) * (WORK_ZINT - WORK_ZINT2)                                                                                                          
+                                                                                                                                                               
+      call accumulate_tavg_field(WORK5, tavg_rhozb_tend, iblock, 1)                                                                                            
+                                                                                                                                                               
+   endif
+
+!-----------------------------------------------------------------------                                                                                       
+!EOC                                                                                                                                                           
+                                                                                                                                                               
+ end subroutine accumulate_tavg_rho_tend
 
 !***********************************************************************
 !BOP

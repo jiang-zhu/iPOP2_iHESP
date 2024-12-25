@@ -133,6 +133,12 @@
    integer (int_kind), dimension(nt), public :: &
       tavg_TEND_TRACER    ! tavg id for tracer tendency
 
+   integer (int_kind), public :: &
+      tavg_rho_tend,             & ! tavg id for density tendency
+      tavg_pd_tend,              & ! tavg id for potential density tendency
+      tavg_rhozb_tend,           & ! tavg id for column averaged density tendency
+      tavg_pb_tend
+
    integer (int_kind), dimension (3:nt) ::  &
       tavg_var,                 & ! tracer
       tavg_var_sqr,             & ! tracer square
@@ -707,6 +713,26 @@ if (nd_on) then
                             grid_loc='3111',                                  &
                             coordinates='TLONG TLAT z_t time')
    end do
+
+   call define_tavg_field(tavg_rho_tend,'TEND_RHO', 3, &
+                          long_name='Tendency of In-Situ Density', &
+                          units='g/cm^3/s', grid_loc='3111',        &
+                          coordinates=coordinates)
+
+   call define_tavg_field(tavg_pd_tend,'TEND_PD', 3, &
+                          long_name='Tendency of Potential Density', &
+                          units='g/cm^3/s', grid_loc='3111',        &
+                          coordinates=coordinates)
+
+   call define_tavg_field(tavg_rhozb_tend,'TEND_RHOZB', 2, &
+                          long_name='Tendency of In-Situ Column Averaged Density', &
+                          units='g/cm^3/s', grid_loc='2110',        &
+                          coordinates='TLONG TLAT time')
+
+   call define_tavg_field(tavg_pb_tend,'TEND_PBO', 2, &
+                          long_name='Tendency of Bottom Pressure', &
+                          units='Pa/s', grid_loc='2110',        &
+                          coordinates='TLONG TLAT time')
 
 !-----------------------------------------------------------------------
 !  allocate and initialize storage for virtual fluxes

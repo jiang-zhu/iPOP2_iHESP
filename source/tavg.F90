@@ -2581,8 +2581,45 @@
          else
       
 !njn01      !$OMP PARALLEL DO PRIVATE(iblock,k,RMASK)
-            do iblock = 1,nblocks_clinic
-               WORK(:,:,iblock) = c0
+
+            if (partial_bottom_cells) then
+
+               do iblock = 1,nblocks_clinic
+                  WORK(:,:,iblock) = c0
+
+                  select case(field_loc)
+
+                  case(field_loc_center)
+                     do k=1,km
+                        RMASK(:,:) = merge(c1, c0, k <= KMT(:,:,iblock)) 
+                        WORK(:,:,iblock) = WORK(:,:,iblock) + DZT(:,:,k,iblock)* &
+                                           TAVG_BUF_3D(:,:,k,iblock,ifield)* &
+                                           TAREA(:,:,iblock)*RMASK
+                     end do
+
+                  case(field_loc_NEcorner)
+                     do k=1,km
+                        RMASK(:,:) = merge(c1, c0, k <= KMU(:,:,iblock)) 
+                        WORK(:,:,iblock) = WORK(:,:,iblock) + DZU(:,:,k,iblock)* &
+                                        TAVG_BUF_3D(:,:,k,iblock,ifield)* &
+                                        UAREA(:,:,iblock)*RMASK
+                     end do
+
+                  case default ! make U cell the default for all other cases
+                     do k=1,km
+                        RMASK(:,:) = merge(c1, c0, k <= KMU(:,:,iblock)) 
+                        WORK(:,:,iblock) = WORK(:,:,iblock) + DZU(:,:,k,iblock)* &
+                                           TAVG_BUF_3D(:,:,k,iblock,ifield)* &
+                                           UAREA(:,:,iblock)*RMASK
+                     end do
+
+                  end select
+               end do
+
+            else
+
+               do iblock = 1,nblocks_clinic
+                  WORK(:,:,iblock) = c0
 
                select case(field_loc)
 
@@ -2610,8 +2647,11 @@
                                         UAREA(:,:,iblock)*RMASK
                   end do
 
-               end select
-            end do
+                  end select
+               end do
+
+            endif
+
 !njn01      !$OMP END PARALLEL DO
 
             tavg_field_sum = global_sum(WORK, distrb_clinic, field_loc)
