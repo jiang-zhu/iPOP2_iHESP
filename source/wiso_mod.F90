@@ -345,9 +345,7 @@ character(*), parameter :: sub_name = 'wiso_mod:wiso_init'
 
    wiso_formulation = 'model'
 
-!  fwiso_flux_prec%filename     = '/glade/home/jizhang/scripts/wiso.test11/ForcingFiles/CAM3.PERinput.gx3v7.12mon.nc'
-!ECB moved file to here:
-   fwiso_flux_prec%filename     = '/glade/u/home/brady/CESM1/iCESM/inputdata/CAM3.PERinput.gx3v7.12mon.nc'
+   fwiso_flux_prec%filename     = '/glade/p/work/jiangzhu/data/inputdata/CAM3.PERinput.gx3v7.12mon.nc'
    fwiso_flux_prec%file_varname = 'Pd18O'
    fwiso_flux_prec%scale_factor = c1
    fwiso_flux_prec%default_val  = c0
@@ -1312,7 +1310,7 @@ character(*), parameter :: sub_name = 'wiso_mod:wiso_init'
 
    use shr_const_mod
    use constants, only: field_loc_center, field_type_scalar, p5, fwmass_to_fwflux
-   use grid,   only: dz
+   use grid,   only: dz, RCALCT
    use forcing_tools, only: update_forcing_data, interpolate_forcing
    use timers, only: timer_start, timer_stop
    use time_management, only: seconds_in_day, check_time_flag, thour00
@@ -1398,6 +1396,22 @@ character(*), parameter :: sub_name = 'wiso_mod:wiso_init'
       STF_HDO,         & ! Total ratio flux from driver
       WORK,            & ! for work computation  
       WISO_surf_sat      ! WISO surface saturation (either d18o or dD) (per mil)
+
+   real (r8), dimension(nx_block,ny_block,max_blocks_clinic) ::   &
+      WISO_SFLUX_16O,  &
+      WISO_SFLUX_18O,  &
+      WISO_SFLUX_HDO,  &
+      ROFF_16O_F_3D,   &
+      ROFF_18O_F_3D,   &
+      ROFF_HDO_F_3D,   &
+      STF_18O_3D,      &
+      STF_HDO_3D,      &
+      ROCE_18O_3D,     &
+      ROCE_HDO_3D
+
+   real (r8) ::        &
+      STF_18O_avg,  &
+      STF_HDO_avg
 
    character (char_len) :: &
       tracer_data_label          ! label for what is being updated
@@ -1820,19 +1834,57 @@ character(*), parameter :: sub_name = 'wiso_mod:wiso_init'
  !$OMP END PARALLEL DO
 
 !-----------------------------------------------------------------------
-!  do marginal sea balancing before setting the STF array
+!  adjust 18O and HDO surface flux
 !-----------------------------------------------------------------------
+   WISO_SFLUX_16O = WISO_SFLUX_TAVG(:,:, 9,:) +  &   ! PREC_16O_F
+                    WISO_SFLUX_TAVG(:,:,12,:) +  &   ! EVAP_16O_F
+                    WISO_SFLUX_TAVG(:,:,15,:) +  &   ! MELT_16O_F
+                    WISO_SFLUX_TAVG(:,:,18,:) +  &   ! ROFF_16O_F
+                    WISO_SFLUX_TAVG(:,:,21,:)        ! IOFF_16O_F
 
-   call ms_balancing_wiso (WISO_SFLUX_TAVG(:,:,37,:))
-   call ms_balancing_wiso (WISO_SFLUX_TAVG(:,:,38,:))
+   WISO_SFLUX_18O = WISO_SFLUX_TAVG(:,:,10,:) +  &   ! PREC_18O_F
+                    WISO_SFLUX_TAVG(:,:,13,:) +  &   ! EVAP_18O_F
+                    WISO_SFLUX_TAVG(:,:,16,:) +  &   ! MELT_18O_F
+                    WISO_SFLUX_TAVG(:,:,19,:) +  &   ! ROFF_18O_F
+                    WISO_SFLUX_TAVG(:,:,22,:)        ! IOFF_HDO_F
 
-   where (LAND_MASK(:,:,:))
-      STF_MODULE(:,:,d18o_ind,:) = WISO_SFLUX_TAVG(:,:,37,:)
-      STF_MODULE(:,:,dD_ind,:)   = WISO_SFLUX_TAVG(:,:,38,:)
-   elsewhere
-      STF_MODULE(:,:,d18o_ind,:) = c0
-      STF_MODULE(:,:,dD_ind,:)   = c0
-   endwhere
+   WISO_SFLUX_HDO = WISO_SFLUX_TAVG(:,:,11,:) +  &   ! PREC_HDO_F
+                    WISO_SFLUX_TAVG(:,:,14,:) +  &   ! EVAP_HDO_F
+                    WISO_SFLUX_TAVG(:,:,17,:) +  &   ! MELT_18O_F
+                    WISO_SFLUX_TAVG(:,:,20,:) +  &   ! ROFF_HDO_F
+                    WISO_SFLUX_TAVG(:,:,23,:)        ! IOFF_HDO_F
+
+   ROFF_16O_F_3D  = WISO_SFLUX_TAVG(:,:,18,:)
+   ROCE_18O_3D    = WISO_SFLUX_TAVG(:,:,25,:) 
+   ROCE_HDO_3D    = WISO_SFLUX_TAVG(:,:,26,:) 
+
+   ! Isotopic flux
+   STF_18O_3D = WISO_SFLUX_18O - WISO_SFLUX_16O
+   STF_HDO_3D = WISO_SFLUX_HDO - WISO_SFLUX_16O
+
+   ! Add virtual flux for NR (non-ROFF fluxes)
+   STF_18O_3D = STF_18O_3D - (WISO_SFLUX_16O - ROFF_16O_F_3D) * (surf_avg(d18o_ind) - c1)
+   STF_HDO_3D = STF_HDO_3D - (WISO_SFLUX_16O - ROFF_16O_F_3D) * (surf_avg(dD_ind)   - c1)
+
+   ! Add virtual flux for ROFF_F 
+   STF_18O_3D = STF_18O_3D - ROFF_16O_F_3D * (ROCE_18O_3D - c1)
+   STF_HDO_3D = STF_HDO_3D - ROFF_16O_F_3D * (ROCE_HDO_3D - c1)
+
+   ! Remove any global-mean trend and convert units
+   call comp_tarea_avg(STF_18O_3D, STF_18O_avg)
+   call comp_tarea_avg(STF_HDO_3D, STF_HDO_avg)
+   STF_18O_3D = RCALCT * fwmass_to_fwflux * (STF_18O_3D - STF_18O_avg)
+   STF_HDO_3D = RCALCT * fwmass_to_fwflux * (STF_HDO_3D - STF_HDO_avg)
+
+   ! Do marginal sea balancing
+   call ms_balancing_wiso (STF_18O_3D)
+   call ms_balancing_wiso (STF_HDO_3D)
+
+   ! Final STF
+   WISO_SFLUX_TAVG(:,:,37,:)    = STF_18O_3D
+   WISO_SFLUX_TAVG(:,:,38,:)    = STF_HDO_3D
+   STF_MODULE(:,:,d18o_ind,:)   = STF_18O_3D
+   STF_MODULE(:,:,dD_ind,:)     = STF_HDO_3D
 
    case default
       call document(sub_name, 'wiso_formulation', wiso_formulation)
@@ -2018,6 +2070,83 @@ character(*), parameter :: sub_name = 'wiso_mod:wiso_init'
 !EOC
 
  end subroutine comp_surf_avg
+
+!***********************************************************************
+!BOP
+! !IROUTINE: comp_tarea_avg
+! !INTERFACE:
+
+ subroutine comp_tarea_avg(XY, XYave)
+
+! !DESCRIPTION:
+!  compute average surface everage
+!
+!  XYave = sum(XY*TAREA) / sum(TAREA)
+!  with the sum taken over ocean points only
+!
+! !REVISION HISTORY:
+!  by Jiang Zhu, Sep. 7, 2015
+
+   use grid, only: TAREA, RCALCT, area_t
+   use global_reductions, only: global_sum
+
+! !INPUT PARAMETERS:
+
+  real (r8), dimension(nx_block,ny_block,max_blocks_clinic), &
+      intent(in) :: XY
+  real (r8), intent(out)  :: &
+      XYave ! resulting global ave
+
+!EOP
+!BOC
+!-----------------------------------------------------------------------
+!  local variables
+!-----------------------------------------------------------------------
+
+   integer (int_kind) :: &
+      n,       & ! tracer index
+      iblock,  & ! block index
+      dcount,  & ! diag counter
+      ib,ie,jb,je
+
+   real (r8), dimension(max_blocks_clinic) :: &
+      local_sums ! array for holding block sums of each diagnostic
+
+   real (r8) :: &
+      sum_tmp ! temp for local sum
+
+   real (r8), dimension(nx_block,ny_block) :: &
+      WORK1, &! local work space
+      TFACT   ! factor for normalizing sums
+
+   type (block) :: &
+      this_block ! block information for current block
+
+!-----------------------------------------------------------------------
+
+   local_sums = c0
+
+!jw   !$OMP PARALLEL DO PRIVATE(iblock,this_block,ib,ie,jb,je,TFACT,n,WORK1)
+   do iblock = 1,nblocks_clinic
+      this_block = get_block(blocks_clinic(iblock),iblock)
+      ib = this_block%ib
+      ie = this_block%ie
+      jb = this_block%jb
+      je = this_block%je
+      TFACT = TAREA(:,:,iblock)*RCALCT(:,:,iblock)
+
+      WORK1 = XY(:,:,iblock) * TFACT
+      local_sums(iblock) = sum(WORK1(ib:ie,jb:je))
+   end do
+!jw   !$OMP END PARALLEL DO
+
+   sum_tmp = sum(local_sums)
+   XYave   = global_sum(sum_tmp,distrb_clinic) / area_t
+
+!-----------------------------------------------------------------------
+!EOC
+
+ end subroutine comp_tarea_avg
 
 !***********************************************************************
 !BOP

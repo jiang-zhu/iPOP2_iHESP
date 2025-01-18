@@ -83,6 +83,7 @@
    use tidal_mixing
    use step_mod, only: init_step
    use gather_scatter
+   use estuary_mod, only: init_estuary
 #ifdef CCSMCOUPLED
    use shr_ncread_mod
    use shr_map_mod
@@ -540,6 +541,14 @@
 !-----------------------------------------------------------------------
 
    call init_sw_absorption
+
+!-----------------------------------------------------------------------
+!
+!  initialize estuary parameterization
+!
+!-----------------------------------------------------------------------
+
+   call init_estuary
 
 !-----------------------------------------------------------------------
 !

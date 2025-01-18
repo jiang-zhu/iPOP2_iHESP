@@ -45,6 +45,7 @@
 
    !*** ccsm
    use sw_absorption, only: set_chl
+   use estuary_mod,only: set_ep
    use registry
    use forcing_fields
 
@@ -424,6 +425,7 @@
       call set_sflux_passive_tracers(U10_SQR,IFRAC,ATM_PRESS,STF)
 
    call set_chl   
+   call set_ep
 
 #ifdef CCSMCOUPLED
    if (ANY(SHF_QSW < qsw_eps)) then

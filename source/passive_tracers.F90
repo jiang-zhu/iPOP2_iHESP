@@ -1116,12 +1116,17 @@ if (nd_on) then
    !$OMP PARALLEL DO PRIVATE(iblock,n,ref_val)
    do iblock = 1,nblocks_clinic
       do n=3,nt
+      !! JZ: This "scalling" method of virtual fluxes fails when
+      !! JZ: (R18O_local-1)/(R18O_ref-1) != (SALT_local/SALT_ref).
+      !! JZ: Virtual flux calculation for WISO has been moved to wiso_mod.F90.
+      if (n < wiso_ind_begin .or. n > wiso_ind_end) then
          ref_val = tracer_ref_val(n)
          if (ref_val /= c0) then
             FvPER(:,:,n,iblock) = &
                (ref_val/(ocn_ref_salinity*ppt_to_salt)) * STF(:,:,2,iblock)
             STF(:,:,n,iblock) = STF(:,:,n,iblock) + FvPER(:,:,n,iblock)
          endif
+      endif
       end do
    end do
    !$OMP END PARALLEL DO

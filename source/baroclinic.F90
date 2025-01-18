@@ -33,6 +33,7 @@
    use broadcast, only: broadcast_scalar
    use communicate, only: my_task, master_task
    use grid, only: FCOR, DZU, HUR, KMU, KMT, sfc_layer_type, l1Ddyn,         &
+       RCALCT, &
        sfc_layer_varthick, partial_bottom_cells, dz, DZT, CALCT, dzw, dzr, HT
    use advection, only: advu, advt, comp_flux_vel_ghost
    use pressure_grad, only: lpressure_avg, gradp
@@ -52,7 +53,7 @@
    use io_types, only: nml_in, nml_filename, stdout
    use tavg, only: define_tavg_field, accumulate_tavg_field, accumulate_tavg_now, &
        tavg_method_max, tavg_method_min
-   use forcing_fields, only: STF, SMF, lsmft_avail, SMFT, TFW
+   use forcing_fields, only: STF, SMF, lsmft_avail, SMFT, TFW, ROFF_L
    use forcing_shf, only: SHF_QSW
    use forcing_sfwf, only: lfw_as_salt_flx
    use sw_absorption, only:  add_sw_absorb
@@ -564,6 +565,9 @@
    type (block) ::        &
       this_block           ! block information for current block
 
+   real (r8), dimension(nx_block,ny_block,nt):: &
+      STFNR               ! surface forcing for all tracers except ROFF contribution
+
 !-----------------------------------------------------------------------
 !
 !  compute flux velocities in ghost cells
@@ -605,6 +609,10 @@
    do iblock = 1,nblocks_clinic
       this_block = get_block(blocks_clinic(iblock),iblock)  
 
+      STFNR(:,:,:)=STF(:,:,:,iblock)
+      STFNR(:,:,2)=STF(:,:,2,iblock)-&
+        RCALCT(:,:,iblock)*ROFF_L(:,:,iblock)*salinity_factor
+
       do k = 1,km 
 
          kp1 = k+1
@@ -626,7 +634,7 @@
                                UVEL   (:,:,:  ,curtime,iblock), &
                                VVEL   (:,:,:  ,curtime,iblock), &
                                RHO    (:,:,:  ,mixtime,iblock), &
-                               STF    (:,:,:          ,iblock), &
+                               STFNR  (:,:,:                 ), &
                                SHF_QSW(:,:            ,iblock), &
                                this_block, SMFT=SMFT(:,:,:,iblock))
          else
@@ -636,7 +644,7 @@
                                UVEL   (:,:,:  ,curtime,iblock), &
                                VVEL   (:,:,:  ,curtime,iblock), &
                                RHO    (:,:,:  ,mixtime,iblock), &
-                               STF    (:,:,:          ,iblock), &
+                               STFNR  (:,:,:                 ), &
                                SHF_QSW(:,:            ,iblock), &
                                this_block, SMF=SMF(:,:,:,iblock))
          endif

@@ -51,6 +51,8 @@
    use named_field_mod, only: named_field_register, named_field_get_index, &
        named_field_set, named_field_get
    use forcing_fields
+
+   use estuary_mod, only: set_estuary_vsf_forcing,vsf_river_correction      
       
    implicit none
    save
@@ -68,6 +70,7 @@
       coupled_freq,        &! frequency of coupling
       ncouple_per_day       ! num of coupler comms per day
 
+   logical::lvsf_river=.TRUE.
 
 #if CCSMCOUPLED
 !-----------------------------------------------------------------------
@@ -87,6 +90,7 @@
       tavg_MELT_F_2,       &! tavg id for melt          flux
       tavg_ROFF_F,       &! tavg id for river runoff  flux
       tavg_ROFF_F_2,       &! tavg id for river runoff  flux
+      tavg_ROFF_L,       &! tavg id for "effective" river runoff  flux
       tavg_IOFF_F,       &! tavg id for ice   runoff  flux due to land-model snow capping
       tavg_IOFF_F_2,       &! tavg id for ice   runoff  flux due to land-model snow capping
       tavg_SALT_F,       &! tavg id for salt          flux
@@ -471,6 +475,10 @@
                           long_name='Runoff Flux from Coupler',                &
                           units='kg/m^2/s', grid_loc='2110',                   &
                           coordinates='TLONG TLAT time')
+   call define_tavg_field(tavg_ROFF_L,'ROFF_L',2,                              &
+                          long_name='Effective ROFF_F (scaled by S_loc/S_ref)', &
+                          units='kg/m^2/s', grid_loc='2110',                   &
+                          coordinates='TLONG TLAT time')
    call define_tavg_field(tavg_IOFF_F,'IOFF_F',2,                              &
                           long_name='Ice Runoff Flux from Coupler due to Land-Model Snow Capping',            &
                           units='kg/m^2/s', grid_loc='2110',                   &
@@ -852,12 +860,22 @@
 !  flag is on, convert fresh and salt inputs to a virtual salinity flux
 !
 !-----------------------------------------------------------------------
+      if (lvsf_river) call set_estuary_vsf_forcing
 
       !$OMP PARALLEL DO PRIVATE(iblock)
       do iblock = 1, nblocks_clinic
+
+        !! JZ: ROFF_L is "effective runoff" in the same unit as ROFF_F.
+        !! JZ: ROFF_L = ROFF_F * SALT_local / SALT_ref + a correction term
+        !! JZ: ROFF_L is used in marginal sea balancing to conserve SALT.
+        !! JZ: ROFF_L is subtracted from STF2 in baroclinic.F90 before KPP to enhance mixing.
+        ROFF_L(:,:,iblock) = (ROFF_F(:,:,iblock) *  &
+            (-MAX(TRACER(:,:,1,2,curtime,iblock),0._r8)) * c1000*fwflux_factor + &
+            vsf_river_correction) / salinity_factor
+
         STF(:,:,2,iblock) = RCALCT(:,:,iblock)*(  &
                      (PREC_F(:,:,iblock)+EVAP_F(:,:,iblock)+  &
-                      MELT_F(:,:,iblock)+ROFF_F(:,:,iblock)+IOFF_F(:,:,iblock))*salinity_factor   &
+                      MELT_F(:,:,iblock)+ROFF_L(:,:,iblock)+IOFF_F(:,:,iblock))*salinity_factor   &
                     + SALT_F(:,:,iblock)*sflux_factor)  
       enddo
       !$OMP END PARALLEL DO
@@ -869,7 +887,7 @@
 !-----------------------------------------------------------------------
  
       if  (lms_balance .and. sfwf_formulation /= 'partially-coupled' ) then
-       call ms_balancing (STF(:,:,2,:),EVAP_F, PREC_F, MELT_F,ROFF_F,IOFF_F,   &
+       call ms_balancing (STF(:,:,2,:),EVAP_F, PREC_F, MELT_F,ROFF_L,IOFF_F,   &
                           SALT_F, QFLUX, 'salt')
       endif
  
@@ -1144,6 +1162,7 @@
          call accumulate_tavg_field(MELT_F(:,:,iblock), tavg_MELT_F_2,iblock,1)
          call accumulate_tavg_field(ROFF_F(:,:,iblock), tavg_ROFF_F,iblock,1)
          call accumulate_tavg_field(ROFF_F(:,:,iblock), tavg_ROFF_F_2,iblock,1)
+         call accumulate_tavg_field(ROFF_L(:,:,iblock), tavg_ROFF_L,iblock,1)
          call accumulate_tavg_field(IOFF_F(:,:,iblock), tavg_IOFF_F,iblock,1)
          call accumulate_tavg_field(IOFF_F(:,:,iblock), tavg_IOFF_F_2,iblock,1)
          call accumulate_tavg_field(SALT_F(:,:,iblock), tavg_SALT_F,iblock,1)
@@ -1260,6 +1279,17 @@
    if (errorCode /= POP_Success) then
       call POP_ErrorSet(errorCode, &
          'update_ghost_cells_coupler: error updating IOFF_F')
+      return
+   endif
+
+   call POP_HaloUpdate(ROFF_L,POP_haloClinic,          &
+                       POP_gridHorzLocCenter,          &
+                       POP_fieldKindScalar, errorCode, &
+                       fillValue = 0.0_POP_r8)
+
+   if (errorCode /= POP_Success) then
+      call POP_ErrorSet(errorCode, &
+         'update_ghost_cells_coupler: error updating ROFF_L')
       return
    endif
 
